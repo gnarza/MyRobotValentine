@@ -2,29 +2,20 @@
 # Natalie Garza
 # 2019
 
-# Used to count the number of words in the data set as well as the unique words.
-# Also small wordCloud examination.
-
-# RESULTS
-# ('TOTAL WORDS: ', 16015)
-# ('UNIQUE WORDS: ', 2976)
+# WordCloud examination.
 
 import matplotlib.pyplot as plt
-import pandas as pd
 from wordcloud import WordCloud, STOPWORDS
-
-totalWords = 0
-uniqueWords = set()
 
 stopwords = set(STOPWORDS)
 wordsies = ' '
 
-file = open("cleanQuotes.txt", "r")
+file = open("data/cleanQuotes.txt", "r")
 for line in file:
-    lineList = line.split(" ")
-    totalWords += len(lineList)
+    line.replace('\n', ' ')
+    line.strip()
+    lineList = line.split(' ')
     for word in lineList:
-        uniqueWords.add(word)
         wordsies = wordsies + word + ' '
 
 file.close()
@@ -37,5 +28,3 @@ plt.axis("off")
 plt.tight_layout(pad = 0)
 
 plt.show()
-print("TOTAL WORDS: ", totalWords)
-print("UNIQUE WORDS: ", len(uniqueWords))
