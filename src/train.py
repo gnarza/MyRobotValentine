@@ -8,14 +8,71 @@ import numpy as np
 import sys
 import io
 import os
-import codecs
+from keras.models import Sequential
+from keras.callbacks import LambdaCallback, ModelCheckpoint, EarlyStopping
+from keras.layers import Dense, Dropout, Activation, LSTM, Bidirectional
 
 SEQUENCE_LEN = 3
 PERCENT_TEST = 10
+DROPOUT = 0
+BATCH_SIZE = 32
 STEP = 1
+
+def generator(sentenceList, nextWordList, batchsize):
+    print('hello')
+    index = 0
+    while True:
+        # np.zeros returns a new array of given shape and type, filled with zeros
+        x = np.zeros((batchsize, SEQUENCE_LEN, len(words)), dtype=np.bool)
+        y = np.zeros((batchsize, len(words)), dtype=np.bool)
+        for i in range(batchsize):
+            for t, w in enumerate(sentenceList[index % len(sentenceList)]):
+                x[i, t, wordToIndex[w]] = 1
+            y[i, wordToIndex[nextWordList[index % len(sentenceList)]]] = 1
+            index += 1
+        yield x, y
+
+def sample(preds, temperature=1.0):
+    preds = np.asarray(preds).astype('float64')
+    preds = np.log(preds) / temperature
+    expPreds = np.exp(preds)
+    preds = expPreds . np.sum(expPreds)
+    probas = np.random.multinomial(1, preds, 1)
+    return np.argmax(probas)
+
+
+def onEpochEnd(epoch, logs):
+    examplesFile.write('\n----- Generating text after Epoch: %d\n' % epoch)
+
+    seedIndex = np.random.randint(len(senTrain, senTest))
+    seed = (senTrain+senTest)[seedIndex]
+
+    for diversity in [.3, .4, .5, .6, .7]:
+        sentence = seed
+        examplesFile.write('----- Diversity: ' + str(diversity) + '\n')
+        examplesFile.write('----- Generating with :\n' + ' '.join(sentence) + '\n')
+        examplesFile.write(' '.join(sentence))
+
+        for i in range(50):
+            xPred = np.zeros((1, SEQUENCE_LEN, len(words)))
+            for t, word in enumerate(sentence):
+                xPred[0, t, wordToIndex[word]] = 1.
+
+                preds = model.predict(xPred, verbose=0)[0]
+                nextIndex = sample(preds, diversity)
+                nextWord = indexToWord[nextIndex]
+
+                sentence = sentence[1:]
+                sentence.append(nextWord)
+
+                examplesFile.write(" " + nextWord)
+            examplesFile.write("\n")
+        examplesFile.write("=" * 80 + "\n")
+        examplesFile.flush()
 
 if __name__ == "__main__":
     quotes = sys.argv[1]
+    examples = sys.argv[2]
 
     if not os.path.isdir('./checkpoints/'):
         os.makedirs('./checkpoints/')
@@ -62,12 +119,12 @@ if __name__ == "__main__":
     # quote, this is to keep the net from generating random quotes
 
     sentences = []
-    nextWord = []
+    nextWords = []
     for currLine in textInLines:
         currLine = currLine.split(' ')
         for i in range(0, len(currLine)-SEQUENCE_LEN):
             sentences.append(currLine[i: i+ SEQUENCE_LEN])
-            nextWord.append(currLine[i+SEQUENCE_LEN])
+            nextWords.append(currLine[i+SEQUENCE_LEN])
 
     # print(sentences[0])
     # print(nextWord[0])
@@ -77,11 +134,41 @@ if __name__ == "__main__":
     tmpNextWord = []
     for i in np.random.permutation(len(sentences)):
         tmpSentences.append(sentences[i])
-        tmpNextWord.append(nextWord[i])
+        tmpNextWord.append(nextWords[i])
 
 
     cutIndex = int(len(sentences) * (1.-(PERCENT_TEST/100.)))
-    xTrain, xTest = tmpSentences[:cutIndex], tmpSentences[cutIndex:]
-    yTrain, yTest = tmpNextWord[:cutIndex], tmpNextWord[cutIndex:]
-    print("Length of training set: ", len(xTrain))
-    print("Length of testing set: ", len(xTest))
+    senTrain, senTest = tmpSentences[:cutIndex], tmpSentences[cutIndex:]
+    nwTrain, nwTest = tmpNextWord[:cutIndex], tmpNextWord[cutIndex:]
+    print("Length of sentences training set: ", len(senTrain))
+    print("Length of nextWords training set: ", len(nwTrain))
+
+    print("Length of sentences testing set: ", len(senTest))
+    print("Length of nextWords testing set: ", len(nwTest))
+
+
+    # Training the model
+    model = Sequential()
+    model.add(Bidirectional(LSTM(128), input_shape=(SEQUENCE_LEN, len(words))))
+    if DROPOUT > 0:
+        model.add(Dropout(DROPOUT))
+    model.add(Dense(len(words)))
+    model.add(Activation('softmax'))
+    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+    filePath = "./checkpoints/LSTM_LOVE-epoch{epoch:03d}-words%d-sequence%d-" \
+                "loss{loss:.4f}-acc{acc:.4f}-val_loss{val_loss:.4f}-val_acc{val_acc:.4f}" % \
+                (len(words), SEQUENCE_LEN)
+
+    checkpoint = ModelCheckpoint(filePath, monitor='val_acc', save_best_only=True)
+    printCallback = LambdaCallback(on_epoch_end=onEpochEnd)
+    earlyStopping = EarlyStopping(monitor='val_acc', patience=5)
+    callbacksList = [checkpoint, printCallback, earlyStopping]
+
+    examplesFile = open(examples, "w")
+    model.fit_generator(generator(senTrain, nwTrain, BATCH_SIZE),
+                        steps_per_epoch=int(len(senTrain)/BATCH_SIZE) + 1,
+                        epochs=100,
+                        callbacks=callbacksList,
+                        validation_data=generator(senTest, nwTest, BATCH_SIZE),
+                        validation_steps=int(len(senTest)/BATCH_SIZE) + 1)
