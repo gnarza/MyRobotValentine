@@ -19,7 +19,6 @@ BATCH_SIZE = 32
 STEP = 1
 
 def generator(sentenceList, nextWordList, batchsize):
-    print('hello')
     index = 0
     while True:
         # np.zeros returns a new array of given shape and type, filled with zeros
@@ -82,19 +81,28 @@ if __name__ == "__main__":
     # ('Quotes length in words: ', 15975)
     # ('Quotes length in lines: ', 944)
 
-    with io.open(quotes, encoding='utf-8') as f:
+    with io.open(quotes) as f:
         # text is used to just count words and ignore new lines
-        text = f.read().replace('\n', ' ')
+        text = f.read().replace('\n', ' ').encode('utf-8')
 
-    with io.open(quotes, encoding='utf-8') as g:
+    with io.open(quotes) as g:
         # textNewLine used to form sentences only within each quote.
-        textNewLine = g.read().replace('\n', ' \n ')
+        textNewLine = g.read().replace('\n', ' \n').encode('utf-8')
         # textNewLine = f.read().lower()
 
     # print('Quotes length in characters: ', len(text))
+    # print(text)
+    # print(textNewLine)
 
     textInWords = [w for w in text.split(' ') if w.strip() != '' or w == '\n']
     textInLines = [w.strip() for w in textNewLine.split('\n') if w.strip() != '']
+
+    # print(textInLines[0])
+    # print(type(textInLines[0]))
+
+    # for ww in textInLines:
+    #     print(ww)
+
     # print('Quotes length in words: ', len(textInWords))
     # print('Quotes length in lines: ', len(textInLines))
     # print(textInLines[943])
@@ -104,9 +112,11 @@ if __name__ == "__main__":
     # ('Unique words in quotes: ', 2638)
 
     words = sorted(set(textInWords))
+    # for ww in words:
+        # print(ww)
     # print('Unique words in quotes: ', len(words))
     wordToIndex = dict((c,i) for i, c in enumerate(words))
-    indexToWord = dict((c,i) for i, c in enumerate(words))
+    indexToWord = dict((i,c) for i, c in enumerate(words))
 
     # Cut up textInWords into sequence where SEQUENCE_LEN is to be put into
     # sentences[] and the word immediately following the sequence is to be put
@@ -121,13 +131,19 @@ if __name__ == "__main__":
     sentences = []
     nextWords = []
     for currLine in textInLines:
+        # currLine.encode('ascii')
         currLine = currLine.split(' ')
         for i in range(0, len(currLine)-SEQUENCE_LEN):
-            sentences.append(currLine[i: i+ SEQUENCE_LEN])
+            sentences.append(currLine[i: i + SEQUENCE_LEN])
             nextWords.append(currLine[i+SEQUENCE_LEN])
 
     # print(sentences[0])
-    # print(nextWord[0])
+    # [str(x) for x in nextWords]
+    # for q in range(0, len(sentences)-1):
+    #     print(sentences[q], "~~~~~~", nextWords[q])
+        # print(type(nextWords[q]))
+
+    # print(type(nextWords[0]))
 
     # Shuffle and split training and testing set
     tmpSentences = []
@@ -140,12 +156,19 @@ if __name__ == "__main__":
     cutIndex = int(len(sentences) * (1.-(PERCENT_TEST/100.)))
     senTrain, senTest = tmpSentences[:cutIndex], tmpSentences[cutIndex:]
     nwTrain, nwTest = tmpNextWord[:cutIndex], tmpNextWord[cutIndex:]
-    print("Length of sentences training set: ", len(senTrain))
-    print("Length of nextWords training set: ", len(nwTrain))
 
-    print("Length of sentences testing set: ", len(senTest))
-    print("Length of nextWords testing set: ", len(nwTest))
+    # print("Length of sentences training set: ", len(senTrain))
+    # print("Length of nextWords training set: ", len(nwTrain))
 
+    # print("Length of sentences testing set: ", len(senTest))
+    # print("Length of nextWords testing set: ", len(nwTest))
+    # print('' in senTrain)
+    # print('' in nwTrain)
+    # print(nwTest)
+
+    # print('' in senTest)
+
+    # print('' in nwTest)
 
     # Training the model
     model = Sequential()
