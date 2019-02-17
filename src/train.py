@@ -2,7 +2,12 @@
 # Natalie Garza
 # 2019
 
-# Train recurrent neural network (RNN) using long short-term memory (LSTM) units
+# Train recurrent neural network (RNN) using long short-term memory (LSTM) units.
+# Save checkpoints of model trained.
+# Create file containing all outputs of each epoch.
+# Run from root directory using :
+# python src/train.py data/cleanQuotes.txt fileForOutput.txt
+# Note that you can name that last file whatever you want.
 
 from __future__ import print_function
 from keras.callbacks import LambdaCallback, ModelCheckpoint, EarlyStopping
@@ -13,12 +18,13 @@ import sys
 import io
 import os
 
-SEQUENCE_LEN = 7
+SEQUENCE_LEN = 10
 PERCENT_TEST = 10
 DROPOUT = 0
 BATCH_SIZE = 32
 STEP = 1
 
+# Used to feed model in chunks as opposed to all at once.
 def generator(sentenceList, nextWordList, batchsize):
     index = 0
     while True:
@@ -32,6 +38,7 @@ def generator(sentenceList, nextWordList, batchsize):
             index += 1
         yield x, y
 
+# Functions from keras-team/keras/blob/master/examples/lstm_text_generation.py
 def sample(preds, temperature=1.0):
     preds = np.asarray(preds).astype('float64')
     preds = np.log(preds) / temperature
@@ -44,18 +51,25 @@ def sample(preds, temperature=1.0):
 def onEpochEnd(epoch, logs):
     examplesFile.write('\n----- Generating text after Epoch: %d\n' % epoch)
 
+    # Picking a random sentence to use as the seed for the network
     seedIndex = np.random.randint(len(senTrain+senTest))
     seed = (senTrain+senTest)[seedIndex]
 
+    # Diversity (Temperature in LSTM talk) controls the randmoness of the
+    # predictions made. Smaller values make up the random, and larger values
+    # appear to be more confident in their predictions.
     for diversity in [.3, .4, .5, .6, .7]:
         sentence = seed
         examplesFile.write('----- Diversity: ' + str(diversity) + '\n')
-        examplesFile.write('----- Generating with :\n' + ' '.join(sentence) + '\n')
-        examplesFile.write(' '.join(sentence))
+        examplesFile.write('----- Generating with : ' + ' '.join(sentence) + '\n')
+        # examplesFile.write(' '.join(sentence))
 
-        for i in range(50):
+        for i in range(20):
+            # This is the numpy array required as the input data for predict()
             xPred = np.zeros((1, SEQUENCE_LEN, len(words)))
             for t, word in enumerate(sentence):
+                # Take a word from the seed sentence and set the corresponding
+                # value of the word in array to 1
                 xPred[0, t, wordToIndex[word]] = 1.
 
                 preds = model.predict(xPred, verbose=0)[0]
@@ -107,11 +121,10 @@ if __name__ == "__main__":
     # Also want to keep in mind the fact that i don't want to intermingle two
     # quotes in the sentence and nextWord. Once the nextWord is found on the
     # next line the loop should stop and start making sentences on the next
-    # quote, this is to keep the net from generating random quotes
+    # quote
     sentences = []
     nextWords = []
     for currLine in textInLines:
-        # currLine.encode('ascii')
         currLine = currLine.split(' ')
         for i in range(0, len(currLine)-SEQUENCE_LEN):
             if currLine[i+SEQUENCE_LEN] != '':
@@ -144,6 +157,7 @@ if __name__ == "__main__":
     model.add(Activation('softmax'))
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
+    # Saving trained models
     filePath = "./checkpoints/LSTM_LOVE-epoch{epoch:03d}-words%d-sequence%d-" \
                 "loss{loss:.4f}-acc{acc:.4f}-val_loss{val_loss:.4f}-val_acc{val_acc:.4f}" % \
                 (len(words), SEQUENCE_LEN)
