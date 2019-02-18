@@ -17,12 +17,22 @@ import numpy as np
 import sys
 import io
 import os
+import codecs
 
 SEQUENCE_LEN = 10
 PERCENT_TEST = 10
 DROPOUT = 0
 BATCH_SIZE = 32
 STEP = 1
+
+def storeVocabulary(wordsPath, wordSet):
+    wordFile = codecs.open(wordsPath, 'w', encoding='utf-8')
+    for w in wordSet:
+        if w != "n":
+            wordFile.write(w+"\n")
+        else:
+            wordFile.write(w)
+    wordFile.close()
 
 # Used to feed model in chunks as opposed to all at once.
 def generator(sentenceList, nextWordList, batchsize):
@@ -87,6 +97,7 @@ def onEpochEnd(epoch, logs):
 if __name__ == "__main__":
     quotes = sys.argv[1]
     examples = sys.argv[2]
+    vocab = sys.argv[3]
 
     if not os.path.isdir('./checkpoints/'):
         os.makedirs('./checkpoints/')
@@ -109,6 +120,7 @@ if __name__ == "__main__":
     textInWords = set(textInWords)
     textInWords.add('')
     words = sorted(textInWords)
+    storeVocabulary(vocab, words)
 
     wordToIndex = dict((c,i) for i, c in enumerate(words))
     indexToWord = dict((i,c) for i, c in enumerate(words))
