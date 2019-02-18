@@ -53,8 +53,8 @@ pipenv run python src/generate.py vocab.txt checkpoint/checkpoints/LSTM_LOVE-epo
 
 #### :sparkling_heart: Where I found stuff
 ---
-[Word-Level LSTM text generator.](https://medium.com/coinmonks/word-level-lstm-text-generator-creating-automatic-song-lyrics-with-neural-networks-b8a1617104fb)
-[How to create a poet using text generation using Python.](https://www.analyticsvidhya.com/blog/2018/03/text-generation-using-python-nlp/)
+[Word-Level LSTM text generator.](https://medium.com/coinmonks/word-level-lstm-text-generator-creating-automatic-song-lyrics-with-neural-networks-b8a1617104fb)\
+[How to create a poet using text generation using Python.](https://www.analyticsvidhya.com/blog/2018/03/text-generation-using-python-nlp/)\
 [aiweirdness blog](http://aiweirdness.com/)
 
 Used for scraping data:
