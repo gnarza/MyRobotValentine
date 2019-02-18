@@ -7,16 +7,16 @@
 ---
 Why do machines get criticized for being emotionless?
 
-As a short investigation and personal study on Natural Language Processing I\ decided to train a recurrent neural network in the language of love\ in light of Valentine's Day.
+As a short investigation and personal study on Natural Language Processing I decided to train a recurrent neural network in the language of love\ in light of Valentine's Day.
 
 #### :sparkling_heart: What it is
 ---
-Building upon Enrique A.'s Word-Level Long Short-Term Memory Text Generator\ Neural Network I wanted
+Building upon Enrique A.'s Word-Level Long Short-Term Memory Text Generator Neural Network I wanted
 to feed the network with my own data-set.
 
 - checkpoints/: In this directory you will find the network data I trained on my computer.
-- data/: Here is all the scripts I used to scrape up the data as well as the final data-set\ I used to train the network "cleanQuotes.txt".
-- src/: Contains the main training program as well as the program used to load an already\ existing network from checkpoints/. Notice that "train.py" is coded specifically for "cleanQuotes.txt".
+- data/: Here is all the scripts I used to scrape up the data as well as the final data-set I used to train the network "cleanQuotes.txt".
+- src/: Contains the main training program as well as the program used to load an already existing network from checkpoints/. Notice that "train.py" is coded specifically for "cleanQuotes.txt".
 
 #### :sparkling_heart: How to use
 ---
@@ -35,8 +35,8 @@ pipenv install
 pipenv shell
 ```
 
-Training Network: Provide the training data file, training output file, and\ the vocabulary file
-Note: A new training output file and vocabulary file will be created if doesn't\ already exist.
+Training Network: Provide the training data file, training output file, and the vocabulary file
+Note: A new training output file and vocabulary file will be created if doesn't already exist.
 Run this from the root of MyRobotValentine.
 ```sh
 pipenv run python src/train.py data/cleanQuotes.txt trainOut.txt vocab.txt
